@@ -169,14 +169,14 @@ echo
 
 echo '--- Building Execution Inputs'
 EXECUTION_INPUTS=$(build_execution_inputs)
-echo "Received the following execution inputs:"
-printf '%s\n' "${PROVIDED_INPUTS[@]}"
+#echo "Received the following execution inputs:"
+#printf '%s\n' "${PROVIDED_INPUTS[@]}"
 echo
 
 echo '--- Building Service Inputs'
 SERVICE_INPUTS=$(build_service_inputs)
-echo "Received the following service inputs:"
-printf '%s\n' "${PROVIDED_SERVICES[@]}"
+#echo "Received the following service inputs:"
+#printf '%s\n' "${PROVIDED_SERVICES[@]}"
 echo
 
 echo '--- Deploying pipeline'
