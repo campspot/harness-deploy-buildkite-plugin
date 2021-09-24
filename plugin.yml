@@ -1,0 +1,29 @@
+name: Harness Deploy Build Kite Plugin
+description: Kicks off a Harness pipeline from buildkite
+author: https://github.com/sleekmountaincat
+requirements: [jq]
+configuration:
+  properties:
+    application:
+      type: string
+    pipeline:
+      type: string
+    harness-api-key:
+      type: string
+    harness-account-id:
+      type: string
+    services:
+      items:
+        artifact:
+          type: string
+        build:
+          type: string
+        name:
+          type: string
+    inputs:
+      items:
+        name:
+          type: string
+        value:
+          type: string
+  additionalProperties: false

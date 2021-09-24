@@ -1,0 +1,190 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+PROVIDED_SERVICES=()
+PROVIDED_INPUTS=()
+
+build_service_inputs() {
+  local INDEX=0
+  local PREFIX="BUILDKITE_PLUGIN_HARNESS_DEPLOY_SERVICES"
+  local NAME_PROPERTY="${PREFIX}_${INDEX}_NAME"
+  local ARTIFACT_PROPERTY="${PREFIX}_${INDEX}_ARTIFACT"
+  local BUILD_PROPERTY="${PREFIX}_${INDEX}_BUILD"
+
+  local RESULT=""
+  local SERVICE=""
+
+  while [[ -n ${!NAME_PROPERTY:-} ]]; do
+    read -r -d '' SERVICE <<-EOF || true
+      {
+        name: \"${!NAME_PROPERTY}\",
+        artifactValueInput: {
+          valueType: BUILD_NUMBER
+          buildNumber: {
+            buildNumber: \"${!BUILD_PROPERTY}\"
+            artifactSourceName: \"${!ARTIFACT_PROPERTY}\"
+          }
+        }
+      }
+		EOF
+    PROVIDED_SERVICES+=("${!NAME_PROPERTY}")
+		RESULT="$RESULT ${SERVICE}, "
+
+    INDEX=$((INDEX+1))
+    NAME_PROPERTY="${PREFIX}_${INDEX}_NAME"
+    ARTIFACT_PROPERTY="${PREFIX}_${INDEX}_ARTIFACT"
+    BUILD_PROPERTY="${PREFIX}_${INDEX}_BUILD"
+  done
+
+  echo "[ ${RESULT} ]"
+}
+
+build_execution_inputs() {
+  local INDEX=0
+  local PREFIX="BUILDKITE_PLUGIN_HARNESS_DEPLOY_INPUTS"
+  local NAME_PROPERTY="${PREFIX}_${INDEX}_NAME"
+  local VALUE_PROPERTY="${PREFIX}_${INDEX}_VALUE"
+
+  local RESULT=""
+  local INPUT=""
+
+  while [[ -n ${!NAME_PROPERTY:-} ]]; do
+    read -r -d '' INPUT <<-EOF || true
+      {
+        name: \"${!NAME_PROPERTY}\",
+        variableValue: {
+          type: NAME
+          value: \"${!VALUE_PROPERTY}\"
+        }
+      }
+		EOF
+    PROVIDED_INPUTS+=("${!NAME_PROPERTY}")
+		RESULT="$RESULT ${INPUT}, "
+
+    INDEX=$((INDEX+1))
+    NAME_PROPERTY="${PREFIX}_${INDEX}_NAME"
+    VALUE_PROPERTY="${PREFIX}_${INDEX}_VALUE"
+  done
+
+  echo "[ ${RESULT} ]"
+}
+
+fetch_application_id() {
+  local APPLICATION_ID_QUERY
+
+  APPLICATION_ID_QUERY=$(tr -ds '\n' ' ' <<-EOF
+    {
+      applicationByName(name: \"$APPLICATION\") {
+        id
+      }
+    }
+		EOF
+  )
+
+  curl --silent \
+    --request POST \
+    --url "https://app.harness.io/gateway/api/graphql?accountId=$HARNESS_ACCOUNT_ID" \
+    --header 'Content-Type: application/json' \
+    --header "x-api-key: $HARNESS_API_KEY" \
+    --data "{\"query\":\"$APPLICATION_ID_QUERY\"}"
+}
+
+fetch_pipeline_id() {
+  local PIPELINE_ID_QUERY
+
+  PIPELINE_ID_QUERY=$(tr -ds '\n' ' ' <<-EOF
+    {
+      pipelineByName(applicationId: \"$APPLICATION_ID\", pipelineName: \"$PIPELINE\") {
+        id
+      }
+    }
+		EOF
+  )
+
+  curl --silent \
+    --request POST \
+    --url "https://app.harness.io/gateway/api/graphql?accountId=$HARNESS_ACCOUNT_ID" \
+    --header 'Content-Type: application/json' \
+    --header "x-api-key: $HARNESS_API_KEY" \
+    --data "{\"query\":\"$PIPELINE_ID_QUERY\"}"
+}
+
+deploy_pipeline() {
+  local DEPLOY_PIPELINE_ID_QUERY
+
+  DEPLOY_PIPELINE_ID_QUERY=$(tr -ds '\n' ' ' <<-EOF
+    mutation {
+      startExecution(
+        input: {
+          applicationId: \"$APPLICATION_ID\",
+          entityId: \"$PIPELINE_ID\",
+          executionType: PIPELINE,
+          serviceInputs: $SERVICE_INPUTS,
+          variableInputs: $EXECUTION_INPUTS
+        }) {
+        clientMutationId
+        execution {
+          id
+          status
+        }
+      }
+    }
+		EOF
+  )
+
+  curl --silent \
+    --request POST \
+    --url "https://app.harness.io/gateway/api/graphql?accountId=$HARNESS_ACCOUNT_ID" \
+    --header 'Content-Type: application/json' \
+    --header "x-api-key: $HARNESS_API_KEY" \
+    --data "{\"query\":\"$DEPLOY_PIPELINE_ID_QUERY\"}"
+}
+
+APPLICATION=$BUILDKITE_PLUGIN_HARNESS_DEPLOY_APPLICATION
+PIPELINE=$BUILDKITE_PLUGIN_HARNESS_DEPLOY_PIPELINE
+HARNESS_API_KEY=$BUILDKITE_PLUGIN_HARNESS_DEPLOY_HARNESS_API_KEY
+
+echo "--- Fetching application ID for application '$APPLICATION'"
+FETCH_APPLICATION_ID_RESPONSE=$(fetch_application_id)
+APPLICATION_ID=$(jq -r '.data.applicationByName.id' <<< "$FETCH_APPLICATION_ID_RESPONSE")
+if [[ "$APPLICATION_ID" == "null" ]]; then
+  echo "Failure, could not fetch application ID: '$FETCH_APPLICATION_ID_RESPONSE'"
+  exit 1
+else
+  echo "Success, application ID: '$APPLICATION_ID'"
+fi
+echo
+
+echo "--- Fetching pipeline ID for pipeline '$PIPELINE'"
+FETCH_PIPELINE_ID_RESPONSE=$(fetch_pipeline_id)
+PIPELINE_ID=$(jq -r '.data.pipelineByName.id' <<< "$FETCH_PIPELINE_ID_RESPONSE")
+if [[ "$PIPELINE_ID" == "null" ]]; then
+  echo "Failure, could not fetch pipeline ID: '$FETCH_PIPELINE_ID_RESPONSE'"
+  exit 1
+else
+  echo "Success, pipeline ID: '$PIPELINE_ID'"
+fi
+echo
+
+echo '--- Building Execution Inputs'
+EXECUTION_INPUTS=$(build_execution_inputs)
+echo "Received the following execution inputs:"
+printf '%s\n' "${PROVIDED_INPUTS[@]}"
+echo
+
+echo '--- Building Service Inputs'
+SERVICE_INPUTS=$(build_service_inputs)
+echo "Received the following service inputs:"
+printf '%s\n' "${PROVIDED_SERVICES[@]}"
+echo
+
+echo '--- Deploying pipeline'
+DEPLOY_PIPELINE_RESPONSE=$(deploy_pipeline)
+EXECUTION_ID=$(jq -r '.data.startExecution.execution.id' <<< "$DEPLOY_PIPELINE_RESPONSE")
+if [[ "$EXECUTION_ID" == "null" ]]; then
+  echo "Failure, could not deploy pipeline: '$DEPLOY_PIPELINE_RESPONSE'"
+  exit 1
+else
+  echo "Success, execution ID: '$EXECUTION_ID'"
+fi
