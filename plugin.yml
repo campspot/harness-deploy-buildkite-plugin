@@ -1,4 +1,4 @@
-name: Harness Deploy Build Kite Plugin
+name: Harness Deploy Buildkite Plugin
 description: Kicks off a Harness pipeline from buildkite
 author: https://github.com/sleekmountaincat
 requirements: [jq]
