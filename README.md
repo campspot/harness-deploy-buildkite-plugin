@@ -5,13 +5,14 @@
 A [Buildkite plugin](https://buildkite.com/docs/agent/v3/plugins) to kick off [Harness](https://harness.io/) pipelines using the Harness GraphQL API.
 
 ## Setup
-You will need a Harness API key provisioned, as well as input names values required to start the Harness pipeline. 
+You will need a Harness API key provisioned, as well as input names and their values that are required to start the Harness pipeline. 
 The [Harness docs](https://docs.harness.io/article/s3leksekny-trigger-workflow-or-a-pipeline-using-api)
 have more information on how to discover and enumerate required execution and service inputs for a given pipeline. 
 
 ## Example
 
-The following Buildkite pipeline will start the `production-app` Harness pipeline in the `app` Harness application:
+The following Buildkite pipeline will start the `production-app` Harness pipeline in the `app` Harness application.
+Execution inputs and service inputs will depoend on your Harness pipeline setup, but included are some examples.
 
 ```yaml
   - name: "Start Harness deploy"
@@ -34,10 +35,10 @@ The following Buildkite pipeline will start the `production-app` Harness pipelin
           services:
             - name: "app-service-one-name"
               artifact: "app-service-one-artifact-name"
-              build: "app-service-one-build-number"
+              build: "app-service-one-artifact-build-number"
             - name: "app-service-two-name"
               artifact: "app-service-two-artifact-name"
-              build: "app-service-two-build-number"
+              build: "app-service-two-artifact-build-number"
 ```
 
 ## Configuration
