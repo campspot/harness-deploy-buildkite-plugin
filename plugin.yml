@@ -26,4 +26,5 @@ configuration:
           type: string
         value:
           type: string
+  required: ['application', 'pipeline', 'harness-api-key', 'harness-account-id']
   additionalProperties: false
