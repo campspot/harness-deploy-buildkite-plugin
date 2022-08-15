@@ -233,12 +233,12 @@ if [[ "$WAIT_FOR_DEPLOY" != "false" ]]; then
 
   GET_DEPLOYMENT_STATUS_RESPONSE=$(get_deployment_status "$EXECUTION_ID")
   CURRENT_STATUS=$(jq -r '.data.executions.nodes[].status' <<< "$GET_DEPLOYMENT_STATUS_RESPONSE")
+  FAILURE_DETAILS=$(jq -r '.data.executions.nodes[].failureDetails' <<< "$GET_DEPLOYMENT_STATUS_RESPONSE")
 
   echo "Deployment is in status: $CURRENT_STATUS"
 
   while [[ "$CURRENT_STATUS" != "SUCCESS" ]]; do
     if [[ "$CURRENT_STATUS" == "ABORTED" || "$CURRENT_STATUS" == "ERROR" || "$CURRENT_STATUS" == "EXPIRED" || "$CURRENT_STATUS" == "FAILED" || "$CURRENT_STATUS" == "REJECTED" || "$CURRENT_STATUS" == "SKIPPED" ]]; then
-      FAILURE_DETAILS=$(jq -r '.data.executions.nodes[].failureDetails' <<< "$GET_DEPLOYMENT_STATUS_RESPONSE")
       echo "Deployment failed with status: $CURRENT_STATUS"
       echo "Failure details: $FAILURE_DETAILS"
       exit 1
@@ -249,6 +249,7 @@ if [[ "$WAIT_FOR_DEPLOY" != "false" ]]; then
     OLD_STATUS=$CURRENT_STATUS
     GET_DEPLOYMENT_STATUS_RESPONSE=$(get_deployment_status "$EXECUTION_ID")
     CURRENT_STATUS=$(jq -r '.data.executions.nodes[].status' <<< "$GET_DEPLOYMENT_STATUS_RESPONSE")
+    FAILURE_DETAILS=$(jq -r '.data.executions.nodes[].failureDetails' <<< "$GET_DEPLOYMENT_STATUS_RESPONSE")
 
     if [[ "$OLD_STATUS" != "$CURRENT_STATUS" ]]; then
       echo "Deployment is in status: $CURRENT_STATUS"
