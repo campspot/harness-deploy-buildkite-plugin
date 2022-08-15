@@ -238,7 +238,9 @@ if [[ "$WAIT_FOR_DEPLOY" != "false" ]]; then
 
   while [[ "$CURRENT_STATUS" != "SUCCESS" ]]; do
     if [[ "$CURRENT_STATUS" == "ABORTED" || "$CURRENT_STATUS" == "ERROR" || "$CURRENT_STATUS" == "EXPIRED" || "$CURRENT_STATUS" == "FAILED" || "$CURRENT_STATUS" == "REJECTED" || "$CURRENT_STATUS" == "SKIPPED" ]]; then
+      FAILURE_DETAILS=$(jq -r '.data.executions.nodes[].failureDetails' <<< "$GET_DEPLOYMENT_STATUS_RESPONSE")
       echo "Deployment failed with status: $CURRENT_STATUS"
+      echo "Failure details: $FAILURE_DETAILS"
       exit 1
     fi
 

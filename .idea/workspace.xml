@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="ea8f5869-b1f6-419b-8ecb-5addc88b8107" name="Changes" comment="add wait-for-deploy" />
+    <list default="true" id="ea8f5869-b1f6-419b-8ecb-5addc88b8107" name="Changes" comment="add wait-for-deploy">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -37,7 +39,7 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1660594903603</updated>
-      <workItem from="1660594904897" duration="4155000" />
+      <workItem from="1660594904897" duration="5469000" />
     </task>
     <task id="LOCAL-00001" summary="add wait-for-deploy">
       <created>1660599030289</created>
@@ -60,7 +62,14 @@
       <option name="project" value="LOCAL" />
       <updated>1660599810190</updated>
     </task>
-    <option name="localTasksCounter" value="4" />
+    <task id="LOCAL-00004" summary="add wait-for-deploy">
+      <created>1660599928023</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1660599928023</updated>
+    </task>
+    <option name="localTasksCounter" value="5" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
