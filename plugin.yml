@@ -12,6 +12,8 @@ configuration:
       type: string
     harness-account-id:
       type: string
+    wait-for-deploy:
+      type: boolean
     services:
       items:
         artifact:

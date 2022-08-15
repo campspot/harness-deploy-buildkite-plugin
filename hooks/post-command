@@ -141,6 +141,43 @@ deploy_pipeline() {
     --data "{\"query\":\"$DEPLOY_PIPELINE_ID_QUERY\"}"
 }
 
+get_deployment_status() {
+  local GET_DEPLOYMENT_STATUS_QUERY
+  local EXECUTION_ID=$1
+
+  GET_DEPLOYMENT_STATUS_QUERY=$(tr -ds '\n' ' ' <<-EOF
+    {
+        executions(limit: 1, filters: [{
+            execution: {
+                operator: EQUALS,
+                values: [\"$EXECUTION_ID\"]
+            }
+        }]) {
+            nodes {
+                application {
+                    id
+                    name
+                }
+                id
+                startedAt
+                status
+                failureDetails
+                startedAt
+                endedAt
+            }
+        }
+    }
+		EOF
+  )
+
+  curl --silent \
+    --request POST \
+    --url "https://app.harness.io/gateway/api/graphql?accountId=$HARNESS_ACCOUNT_ID" \
+    --header 'Content-Type: application/json' \
+    --header "x-api-key: $HARNESS_API_KEY" \
+    --data "{\"query\":\"$GET_DEPLOYMENT_STATUS_QUERY\"}"
+}
+
 APPLICATION=$BUILDKITE_PLUGIN_HARNESS_DEPLOY_APPLICATION
 PIPELINE=$BUILDKITE_PLUGIN_HARNESS_DEPLOY_PIPELINE
 HARNESS_API_KEY=$BUILDKITE_PLUGIN_HARNESS_DEPLOY_HARNESS_API_KEY
@@ -188,4 +225,32 @@ if [[ "$EXECUTION_ID" == "null" ]]; then
   exit 1
 else
   echo "Success, execution ID: '$EXECUTION_ID'"
+fi
+
+if [[ "$BUILDKITE_PLUGIN_HARNESS_DEPLOY_WAIT_FOR_DEPLOY" != "false" ]]; then
+  echo '--- Waiting for Harness deploy to complete'
+
+  GET_DEPLOYMENT_STATUS_RESPONSE=$(get_deployment_status "$EXECUTION_ID")
+  CURRENT_STATUS=$(jq -r '.data.executions.nodes[].status' <<< "$GET_DEPLOYMENT_STATUS_RESPONSE")
+
+  echo "Deployment is in status: $CURRENT_STATUS"
+
+  while [[ "$CURRENT_STATUS" != "SUCCESS" ]]; do
+    if [[ "$CURRENT_STATUS" == "ABORTED" || "$CURRENT_STATUS" == "ERROR" || "$CURRENT_STATUS" == "EXPIRED" || "$CURRENT_STATUS" == "FAILED" || "$CURRENT_STATUS" == "REJECTED" || "$CURRENT_STATUS" == "SKIPPED" ]]; then
+      echo "Deployment failed with status: $CURRENT_STATUS"
+      exit 1
+    fi
+
+    sleep 5
+
+    OLD_STATUS=$CURRENT_STATUS
+    GET_DEPLOYMENT_STATUS_RESPONSE=$(get_deployment_status "$EXECUTION_ID")
+    CURRENT_STATUS=$(jq -r '.data.executions.nodes[].status' <<< "$GET_DEPLOYMENT_STATUS_RESPONSE")
+
+    if [[ "$OLD_STATUS" != "$CURRENT_STATUS" ]]; then
+      echo "Deployment is in status: $CURRENT_STATUS"
+    fi
+  done
+
+  echo "Deployment complete!"
 fi

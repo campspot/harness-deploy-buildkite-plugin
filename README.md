@@ -59,6 +59,10 @@ Execution inputs and service inputs will depoend on your Harness pipeline setup,
 
   Your Harness account ID
 
+- `wait-for-deploy` (boolean)
+  
+  Defaults to true. Whether to wait for the Harness deploy to pass/fail
+
 - `inputs` (array)
 
   Execution inputs that your Harness pipeline requires. Name and value depend on your harness pipeline setup
