@@ -5,9 +5,9 @@
 A [Buildkite plugin](https://buildkite.com/docs/agent/v3/plugins) to kick off [Harness](https://harness.io/) pipelines using the Harness GraphQL API.
 
 ## Setup
-You will need a Harness API key provisioned, as well as input names and their values that are required to start the Harness pipeline. 
+You will need a Harness API key provisioned, as well as input names and their values that are required to start the Harness pipeline.
 The [Harness docs](https://docs.harness.io/article/s3leksekny-trigger-workflow-or-a-pipeline-using-api)
-have more information on how to discover and enumerate required execution and service inputs for a given pipeline. 
+have more information on how to discover and enumerate required execution and service inputs for a given pipeline.
 
 ## Example
 
@@ -59,6 +59,10 @@ Execution inputs and service inputs will depoend on your Harness pipeline setup,
 
   Your Harness account ID
 
+- `wait-for-deploy` (boolean)
+
+  Defaults to true. Whether to wait for the Harness deploy to pass/fail
+
 - `inputs` (array)
 
   Execution inputs that your Harness pipeline requires. Name and value depend on your harness pipeline setup
@@ -74,15 +78,15 @@ Execution inputs and service inputs will depoend on your Harness pipeline setup,
 
   Service inputs that your Harness pipeline requires. Values depend on your harness pipeline setup. See [Harness docs](https://docs.harness.io/article/s3leksekny-trigger-workflow-or-a-pipeline-using-api) for more information
 
-    - `name` (string)
+  - `name` (string)
 
   The name of the service
 
-    - `artifact` (string)
+  - `artifact` (string)
 
   The name of the artifact
 
-    - `build` (string)
+  - `build` (string)
 
   The build number of the artifact
 
